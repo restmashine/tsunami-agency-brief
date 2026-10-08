@@ -172,9 +172,9 @@ function render(){
   }
   if(S.step===3){
     sc.innerHTML=`<h1>Как с вами связаться</h1><p class="sub">Телефон нужен курьеру. Код из SMS не нужен, аккаунт создавать не нужно.</p>
-      <div class="field"><label>Имя</label><input id="nm" value="${esc(S.name)}" autocomplete="off"></div>
-      <div class="field" id="phf"><label>Телефон</label><input id="ph" value="${esc(S.phone)}" inputmode="tel" placeholder="+7" autocomplete="off"></div>
-      <div class="field"><label>Комментарий курьеру <em>необязательно</em></label><textarea id="cm" rows="2"></textarea></div>
+      <div class="field"><label for="nm">Имя</label><input id="nm" value="${esc(S.name)}" placeholder="Например, Анна" autocomplete="off"></div>
+      <div class="field" id="phf"><label for="ph">Телефон</label><input id="ph" value="${esc(S.phone)}" inputmode="tel" placeholder="+7 (000) 000-00-00" autocomplete="off"></div>
+      <div class="field"><label for="cm">Комментарий курьеру <em>необязательно</em></label><textarea id="cm" rows="2" placeholder="Например, не звонить в домофон"></textarea></div>
       <label class="note" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="ag" ${S.agree?'checked':''}> Демо согласия — договор не заключается</label>`;
     const ok=()=>S.name.trim().length>1&&S.phone.replace(/\D/g,'').length>=11&&S.agree;
     const setCta=()=>{cta.disabled=!ok();cta.innerHTML=ok()?`<span>К оплате</span><span>→</span>`:'Имя и телефон'};
