@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Цунами — заказ без входа (прототип H10)</title>
+<style>
+  :root{
+    --bg:#0e0e0f; --panel:#1b1b1d; --card:#262628; --line:#333336;
+    --text:#f4f4f2; --muted:#a6a6a3; --yellow:#f2c230; --yellow-ink:#1a1500;
+    --ok:#7bd88f; --warn:#ff8a5c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.45 Inter,system-ui,-apple-system,sans-serif}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .app{max-width:430px;margin:0 auto;min-height:100vh;padding:0 16px 200px}
+  .proto{font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;padding:10px 0 6px}
+  .top{display:flex;align-items:center;gap:12px;padding:8px 0 4px}
+  .back{width:40px;height:40px;border-radius:50%;background:var(--card);border:0;font-size:20px;flex:none}
+  .back[hidden]{visibility:hidden;display:block}
+  .steps{flex:1;display:flex;gap:4px}
+  .steps i{flex:1;height:6px;border-radius:3px;background:var(--card)}
+  .steps i.on{background:var(--yellow)}
+  h1{font:800 22px/1.15 "JetBrains Mono",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.02em;margin:18px 0 6px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:15px}
+  .cond{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;margin:6px 0 14px}
+  .cond b{color:var(--yellow)}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:none}
+  .chips button{flex:none;border:0;background:var(--card);border-radius:999px;padding:8px 14px;font-size:14px}
+  .chips button.on{background:var(--yellow);color:var(--yellow-ink);font-weight:600}
+  .dish{display:grid;grid-template-columns:72px 1fr;gap:12px;background:var(--card);border-radius:14px;padding:10px;margin-bottom:10px}
+  .ph{width:72px;height:72px;border-radius:10px;background:linear-gradient(135deg,#3a3a3d,#26262a);display:grid;place-items:center;font-size:26px}
+  .dish h3{margin:0;font:600 15px/1.25 Inter}
+  .dish p{margin:2px 0 8px;color:var(--muted);font-size:13px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .add{border:0;background:var(--yellow);color:var(--yellow-ink);font-weight:700;border-radius:10px;padding:7px 12px;font-size:14px}
+  .qty{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:10px;padding:4px}
+  .qty button{width:30px;height:30px;border:0;border-radius:8px;background:var(--card);font-size:18px}
+  .qty span{min-width:18px;text-align:center;font-weight:600}
+  .field{background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:10px;border:2px solid transparent}
+  .field.bad{border-color:var(--warn)}
+  .field label{display:block;font-size:12px;color:var(--muted)}
+  .field label em{font-style:normal;color:var(--ok)}
+  .field input,.field textarea{width:100%;background:transparent;border:0;outline:0;color:var(--text);font:500 16px Inter;padding:4px 0 2px;resize:none}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sugg{display:grid;gap:6px;margin:-2px 0 12px}
+  .sugg button{text-align:left;border:0;background:var(--panel);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--muted)}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:8px 0 14px;display:grid;gap:8px}
+  .box .ln{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+  .box .ln span:first-child{color:var(--muted)}
+  .ok{color:var(--ok)}
+  .note{font-size:13px;color:var(--muted);margin:6px 0 0}
+  .pay{display:grid;gap:10px;margin-bottom:14px}
+  .pay button{display:flex;justify-content:space-between;align-items:center;border:2px solid transparent;background:var(--card);border-radius:14px;padding:14px;text-align:left}
+  .pay button.on{border-color:var(--yellow)}
+  .pay small{color:var(--muted)}
+  .bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,var(--bg) 30%)}
+  .bottom .in{max-width:398px;margin:0 auto}
+  .cta{width:100%;border:0;border-radius:14px;padding:16px;background:var(--yellow);color:var(--yellow-ink);font:700 17px Inter;display:flex;justify-content:space-between;align-items:center}
+  .cta:disabled{opacity:.4;cursor:not-allowed}
+  .done{text-align:center;padding-top:40px}
+  .done .big{font-size:56px}
+  .opt{border:0;background:var(--card);border-radius:12px;padding:12px;width:100%;text-align:left;margin-top:8px;font-size:15px}
+  .mod{max-width:430px;margin:24px auto 0;padding:0 16px;color:var(--muted);font-size:12px}
+  .mod details{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+  .mod table{width:100%;border-collapse:collapse;margin-top:6px}
+  .mod td{padding:3px 0;border-top:1px solid var(--line)}
+  .mod td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.demo-note{max-width:430px;margin:0 auto;padding:12px 16px;color:#f2c230;background:#202017;font:12px/1.45 system-ui,sans-serif}input,textarea{color-scheme:dark}
+</style>
+</head>
+<body>
+<div class="demo-note">ДЕМО · вымышленные данные и условия. Заказ и оплата не выполняются. Используйте тестовые данные; ввод остаётся в этой вкладке.</div>
+<div class="app">
+  <div class="proto">Прототип H10 · заказ без входа · демо-данные</div>
+  <div class="top">
+    <button class="back" id="back" aria-label="Назад" hidden>←</button>
+    <div class="steps" id="steps"><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+  <main id="screen"></main>
+</div>
+<div class="bottom"><div class="in"><button class="cta" id="cta"></button></div></div>
+
+
+<script>
+
+const MENU=[
+  {id:'nikkei',cat:'Сеты',name:'Сет «Никкей»',price:5390,about:'32 шт · лосось, запечённые роллы',e:'🍱'},
+  {id:'tokio',cat:'Сеты',name:'Сет «Путь из Токио в Лиму»',price:7990,about:'48 шт · лосось, тунец, никкей',e:'🍱'},
+  {id:'phila',cat:'Роллы',name:'Ролл Филадельфия',price:1590,about:'8 шт · лосось, сливочный сыр',e:'🍣'},
+  {id:'kamch',cat:'Роллы',name:'Ролл камчатский',price:1590,about:'8 шт · камчатский краб',e:'🍣'},
+  {id:'truf',cat:'Роллы',name:'Ролл трюфельный гребешок',price:1690,about:'8 шт · гребешок, авокадо, омлет',e:'🍣'},
+  {id:'natori',cat:'Роллы',name:'Ролл Натори',price:1490,about:'8 шт · запечённый',e:'🍣'},
+  {id:'tuna',cat:'Сашими',name:'Сашими тунец',price:990,about:'3 шт',e:'🐟'},
+  {id:'salmon',cat:'Сашими',name:'Сашими лосось',price:1150,about:'3 шт',e:'🐟'},
+  {id:'cake',cat:'Десерты',name:'Маковый чизкейк с инжиром',price:910,about:'224 г',e:'🍰'}
+];
+const CATS=['Все','Сеты','Роллы','Сашими','Десерты'];
+const ZONES=[{t:'40–60 мин',fee:0},{t:'50–70 мин',fee:290},{t:'70–90 мин',fee:490}];
+const FREE_FROM=6000;
+const SUGG=['Ленинградский проспект, 37','Тверская улица, 22','Большая Садовая улица, 10'];
+const S={step:0,cat:'Все',cart:{},persons:2,addr:'',flat:'',entr:'',zone:null,name:'',phone:'',pay:'card',agree:true};
+const LOG=[];let t0=Date.now(),tStep=Date.now();
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rub=n=>n.toLocaleString('ru-RU')+' ₽';
+const $=s=>document.querySelector(s);
+const sum=()=>Object.entries(S.cart).reduce((a,[id,q])=>a+MENU.find(m=>m.id===id).price*q,0);
+const count=()=>Object.values(S.cart).reduce((a,q)=>a+q,0);
+const fee=()=>!S.zone?null:(sum()>=FREE_FROM?0:S.zone.fee);
+const NAMES=['Меню','Корзина','Адрес и условия','Контакт','Оплата','Заказ принят'];
+
+function mark(){const now=Date.now();LOG.push({s:NAMES[S.step],sec:Math.round((now-tStep)/1000)});tStep=now;renderMod()}
+function go(n){mark();S.step=n;render();window.scrollTo(0,0)}
+
+function qtyCtl(id){const q=S.cart[id]||0;return q?`<div class="qty"><button data-m="${id}">−</button><span>${q}</span><button data-p="${id}">+</button></div>`:`<button class="add" data-p="${id}">+</button>`}
+function bindQty(root){
+  root.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{S.cart[b.dataset.p]=(S.cart[b.dataset.p]||0)+1;render()});
+  root.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const id=b.dataset.m;S.cart[id]--;if(S.cart[id]<=0)delete S.cart[id];render()});
+}
+
+function render(){
+  document.querySelectorAll('#steps i').forEach((el,i)=>el.classList.toggle('on',i<=Math.min(S.step,4)));
+  $('#back').hidden=S.step===0||S.step===5;
+  const sc=$('#screen'), cta=$('#cta');
+  if(S.step===0){
+    sc.innerHTML=`<h1>Меню</h1>
+      <div class="cond">🛵 <span>Доставка по Москве <b>40–90 мин</b>, бесплатно от <b>${rub(FREE_FROM)}</b>. Точное время и цену покажем после адреса — в корзине.</span></div>
+      <div class="chips">${CATS.map(c=>`<button class="${c===S.cat?'on':''}" data-c="${c}">${c}</button>`).join('')}</div>
+      ${MENU.filter(m=>S.cat==='Все'||m.cat===S.cat).map(m=>`<div class="dish"><div class="ph">${m.e}</div><div><h3>${m.name}</h3><p>${m.about}</p><div class="row"><b>${rub(m.price)}</b>${qtyCtl(m.id)}</div></div></div>`).join('')}`;
+    sc.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.c;render()});
+    bindQty(sc);
+    cta.disabled=!count();cta.innerHTML=count()?`<span>Корзина · ${count()}</span><span>${rub(sum())}</span>`:'Добавьте блюда — вход не нужен';
+    cta.onclick=()=>go(1);
+  }
+  if(S.step===1){
+    const ids=Object.keys(S.cart);
+    sc.innerHTML=`<h1>Корзина</h1><p class="sub">Вход и регистрация не нужны. Дальше — адрес, и сразу покажем время и цену доставки.</p>
+      ${ids.map(id=>{const m=MENU.find(x=>x.id===id);return `<div class="dish"><div class="ph">${m.e}</div><div><h3>${m.name}</h3><p>${m.about}</p><div class="row"><b>${rub(m.price*S.cart[id])}</b>${qtyCtl(id)}</div></div></div>`}).join('')}
+      <div class="box"><div class="ln"><span>Приборы</span><div class="qty"><button id="pm">−</button><span>${S.persons}</span><button id="pp">+</button></div></div>
+      <p class="note">Соевый соус, имбирь и васаби кладём к каждому набору.</p></div>
+      <div class="box"><div class="ln"><span>Блюда</span><b>${rub(sum())}</b></div>
+      ${sum()<FREE_FROM?`<div class="ln"><span>До бесплатной доставки</span><span>${rub(FREE_FROM-sum())}</span></div>`:`<div class="ln"><span>Доставка</span><span class="ok">бесплатно</span></div>`}</div>`;
+    bindQty(sc);
+    $('#pm').onclick=()=>{S.persons=Math.max(0,S.persons-1);render()};$('#pp').onclick=()=>{S.persons++;render()};
+    if(!count()){go(0);return}
+    cta.disabled=false;cta.innerHTML=`<span>Указать адрес</span><span>→</span>`;cta.onclick=()=>go(2);
+  }
+  if(S.step===2){
+    sc.innerHTML=`<h1>Куда везём</h1><p class="sub">Проверим, всё ли из корзины доступно на этот адрес, и покажем время и цену.</p>
+      <div class="field"><label>Улица и дом</label><input id="addr" value="${esc(S.addr)}" placeholder="Например, Тверская, 22" autocomplete="off"></div>
+      <div class="sugg" id="sugg" ${S.zone?'hidden':''}>${SUGG.map((a,i)=>`<button data-s="${i}">${a}</button>`).join('')}</div>
+      <div class="grid2"><div class="field"><label>Квартира <em>необязательно</em></label><input id="flat" value="${esc(S.flat)}"></div><div class="field"><label>Подъезд <em>необязательно</em></label><input id="entr" value="${esc(S.entr)}"></div></div>
+      <div id="cond"></div>`;
+    const showCond=()=>{
+      const c=$('#cond');
+      if(!S.zone){c.innerHTML='';return}
+      const f=fee();
+      c.innerHTML=`<div class="box">
+        <div class="ln"><span>Всё из корзины</span><span class="ok">✓ доступно</span></div>
+        <div class="ln"><span>Готовим</span><span>«Цунами Суши», 1-я Магистральная, 18с1</span></div>
+        <div class="ln"><span>Привезём за</span><b>${S.zone.t}</b></div>
+        <div class="ln"><span>Доставка</span><span>${f===0?'<span class="ok">бесплатно</span>':rub(f)}</span></div>
+        <p class="note">Курьера вызываем сами — вам ничего делать не нужно.</p></div>`;
+    };
+    const inp=$('#addr');
+    inp.oninput=()=>{S.addr=inp.value;S.zone=inp.value.trim().length>=6?ZONES[inp.value.trim().length%ZONES.length]:null;$('#sugg').hidden=!!S.zone;showCond();setCta()};
+    sc.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.addr=SUGG[+b.dataset.s];S.zone=ZONES[+b.dataset.s];inp.value=S.addr;$('#sugg').hidden=true;showCond();setCta()});
+    $('#flat').oninput=e=>S.flat=e.target.value;$('#entr').oninput=e=>S.entr=e.target.value;
+    showCond();
+    const setCta=()=>{cta.disabled=!S.zone;cta.innerHTML=S.zone?`<span>Дальше: контакт</span><span>→</span>`:'Укажите улицу и дом'};
+    setCta();cta.onclick=()=>go(3);
+  }
+  if(S.step===3){
+    sc.innerHTML=`<h1>Как с вами связаться</h1><p class="sub">Телефон нужен курьеру. Код из SMS не нужен, аккаунт создавать не нужно.</p>
+      <div class="field"><label>Имя</label><input id="nm" value="${esc(S.name)}" autocomplete="off"></div>
+      <div class="field" id="phf"><label>Телефон</label><input id="ph" value="${esc(S.phone)}" inputmode="tel" placeholder="+7" autocomplete="off"></div>
+      <div class="field"><label>Комментарий курьеру <em>необязательно</em></label><textarea id="cm" rows="2"></textarea></div>
+      <label class="note" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="ag" ${S.agree?'checked':''}> Демо согласия — договор не заключается</label>`;
+    const ok=()=>S.name.trim().length>1&&S.phone.replace(/\D/g,'').length>=11&&S.agree;
+    const setCta=()=>{cta.disabled=!ok();cta.innerHTML=ok()?`<span>К оплате</span><span>→</span>`:'Имя и телефон'};
+    $('#nm').oninput=e=>{S.name=e.target.value;setCta()};
+    $('#ph').oninput=e=>{S.phone=e.target.value;setCta()};
+    $('#ag').onchange=e=>{S.agree=e.target.checked;setCta()};
+    setCta();cta.onclick=()=>go(4);
+  }
+  if(S.step===4){
+    const f=fee(),total=sum()+f;
+    sc.innerHTML=`<h1>Оплата</h1>
+      <div class="box"><div class="ln"><span>Блюда · ${count()}</span><span>${rub(sum())}</span></div>
+      <div class="ln"><span>Доставка · ${S.zone.t}</span><span>${f===0?'бесплатно':rub(f)}</span></div>
+      <div class="ln"><span>Адрес</span><span>${esc(S.addr)}${S.flat?', кв. '+esc(S.flat):''}</span></div>
+      <div class="ln"><span>Приборы</span><span>${S.persons}</span></div>
+      <div class="ln"><b>Итого</b><b>${rub(total)}</b></div></div>
+      <div class="pay"><button class="${S.pay==='card'?'on':''}" data-pay="card"><span>Картой онлайн<br><small>Visa, Mastercard, Мир</small></span><span>${S.pay==='card'?'●':'○'}</span></button>
+      <button class="${S.pay==='sbp'?'on':''}" data-pay="sbp"><span>СБП<br><small>через приложение банка</small></span><span>${S.pay==='sbp'?'●':'○'}</span></button></div>
+      <p class="note">Демо: оплата не проводится.</p>`;
+    sc.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{S.pay=b.dataset.pay;render()});
+    cta.disabled=false;cta.innerHTML=`<span>Оплатить</span><span>${rub(total)}</span>`;cta.onclick=()=>go(5);
+  }
+  if(S.step===5){
+    sc.innerHTML=`<div class="done"><div class="big">✓</div><h1>Заказ принят</h1><p class="sub">Привезём за ${S.zone.t}. Статус пришлём SMS на ${esc(S.phone)}.</p></div>
+      <div class="box"><b>Сохранить данные для следующего заказа?</b><p class="note">Адрес и состав подставим сами — вход по коду можно сделать сейчас или никогда.</p>
+      <button class="opt" id="sv1">Да, сохранить</button><button class="opt" id="sv2">Нет, спасибо</button></div>`;
+    $('#sv1').onclick=()=>{LOG.push({s:'Сохранить данные: да',sec:0});renderMod()};$('#sv2').onclick=()=>{LOG.push({s:'Сохранить данные: нет',sec:0});renderMod()};
+    cta.disabled=false;cta.innerHTML='<span>Пройти заново</span><span>↺</span>';
+    cta.onclick=()=>{mark();Object.assign(S,{step:0,cat:'Все',cart:{},persons:2,addr:'',flat:'',entr:'',zone:null,name:'',phone:'',pay:'card',agree:true});LOG.length=0;t0=Date.now();tStep=Date.now();render();renderMod()};
+  }
+}
+function renderMod(){}
+$('#back').onclick=()=>go(Math.max(0,S.step-1));
+render();renderMod();
+</script>
+</body>
+</html>

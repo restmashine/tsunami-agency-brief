@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Цунами — подберём заказ (прототип квиза)</title>
+<style>
+  :root{
+    --bg:#0e0e0f; --panel:#1b1b1d; --card:#262628; --line:#333336;
+    --text:#f4f4f2; --muted:#a6a6a3; --yellow:#f2c230; --yellow-ink:#1a1500;
+    --orange:#e8833a; --ok:#7bd88f; --warn:#ff8a5c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.45 Inter,system-ui,-apple-system,sans-serif}
+  .app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:0 16px 190px}
+  .proto{font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;padding:10px 0 6px}
+  .top{display:flex;align-items:center;gap:12px;padding:8px 0 4px}
+  .back{width:40px;height:40px;border-radius:50%;background:var(--card);border:0;color:var(--text);font-size:20px;cursor:pointer}
+  .back[hidden]{visibility:hidden;display:block}
+  .bar{flex:1;height:6px;background:var(--card);border-radius:3px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--yellow);width:0;transition:width .25s}
+  .step-n{font:600 13px Inter;color:var(--muted);min-width:34px;text-align:right}
+  h1{font:700 22px/1.15 "JetBrains Mono",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.02em;margin:22px 0 8px}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .field{background:var(--card);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+  .field label{display:block;font-size:12px;color:var(--muted)}
+  .field input{width:100%;background:transparent;border:0;outline:0;color:var(--text);font:500 16px Inter;padding:4px 0 2px}
+  .tabs{display:flex;background:var(--card);border-radius:12px;padding:4px;margin-bottom:14px}
+  .tabs button{flex:1;border:0;background:transparent;color:var(--text);font:600 15px Inter;padding:11px;border-radius:9px;cursor:pointer}
+  .tabs button.on{background:var(--yellow);color:var(--yellow-ink)}
+  .opts{display:grid;gap:10px}
+  .opt{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);border:2px solid transparent;border-radius:14px;padding:14px;color:var(--text);cursor:pointer;font:inherit}
+  .opt b{display:block;font-weight:600}
+  .opt span{color:var(--muted);font-size:14px}
+  .opt .ic{width:44px;height:44px;border-radius:12px;background:#333;display:grid;place-items:center;font-size:22px;flex:none}
+  .opt.on{border-color:var(--yellow);background:#2d2a1c}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .chip{border:2px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:9px 14px;font:500 15px Inter;cursor:pointer}
+  .chip.on{border-color:var(--yellow);background:#2d2a1c}
+  .chip.no.on{border-color:var(--warn);background:#2e1f19}
+  .lbl{font:600 13px Inter;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:6px 0 10px}
+  .stepper{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:16px}
+  .stepper button{width:48px;height:48px;border-radius:50%;border:0;background:#3a3a3d;color:var(--text);font-size:24px;cursor:pointer}
+  .stepper output{font:700 34px "JetBrains Mono",monospace}
+  .hint{color:var(--muted);font-size:14px;margin-top:10px}
+  .info{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:grid;gap:8px}
+  .info .row{display:flex;gap:10px;align-items:baseline}
+  .info .row b{min-width:96px;color:var(--muted);font-weight:500;font-size:14px}
+  .ok{color:var(--ok)} .demo{font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:1px 6px;margin-left:6px}
+  .cta{position:fixed;left:0;right:0;bottom:0;padding:12px 16px 18px;background:linear-gradient(transparent,var(--bg) 30%)}
+  .cta .in{max-width:398px;margin:0 auto;display:grid;gap:8px}
+  .btn{border:0;border-radius:14px;padding:16px;font:700 16px Inter;cursor:pointer;width:100%}
+  .btn.y{background:var(--yellow);color:var(--yellow-ink)}
+  .btn.o{background:var(--orange);color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .btn.g{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .btn:disabled{opacity:.4;cursor:default}
+  .set{background:var(--card);border-radius:16px;overflow:hidden;margin-bottom:12px}
+  .set .ph{height:120px;background:radial-gradient(circle at 30% 40%,#e9b46a 0 18%,transparent 19%),radial-gradient(circle at 55% 55%,#f2c230 0 16%,transparent 17%),radial-gradient(circle at 78% 42%,#d8754e 0 17%,transparent 18%),#1a1a1a;position:relative}
+  .set .ph em{position:absolute;left:10px;top:10px;font:600 11px Inter;font-style:normal;background:#000a;color:var(--muted);padding:3px 7px;border-radius:6px}
+  .set .bd{padding:14px}
+  .set h3{margin:0 0 4px;font-size:18px}
+  .set .why{color:var(--muted);font-size:14px;margin:6px 0 0}
+  .price{font:700 18px Inter}
+  .line{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .gift{display:flex;gap:12px;align-items:center;background:#2d2a1c;border:1px solid #5a4d16;border-radius:14px;padding:12px 14px;margin:12px 0}
+  .gift .w{font:700 14px "JetBrains Mono",monospace;background:var(--yellow);color:var(--yellow-ink);border-radius:8px;padding:6px 8px}
+  .note{font-size:14px;color:var(--muted)}
+  .sum{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
+  .sum button{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:6px 10px;font:500 13px Inter;cursor:pointer}
+  .free{display:flex;gap:12px;align-items:center;background:var(--panel);border-radius:14px;padding:12px 14px;margin:8px 0}
+  .free .meter{width:44px;height:44px;border-radius:50%;background:conic-gradient(var(--yellow) var(--p),#333 0);display:grid;place-items:center}
+  .free .meter i{width:34px;height:34px;border-radius:50%;background:var(--panel)}
+  .sugg{display:grid;gap:6px;margin:-4px 0 12px}
+  .sugg button{text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font:500 15px Inter;cursor:pointer}
+  .sugg button span{color:var(--muted);font-size:13px;margin-left:6px}
+  .err{color:var(--warn);font-size:14px;margin:-4px 0 10px}
+  [hidden]{display:none!important}
+.demo-note{max-width:430px;margin:0 auto;padding:12px 16px;color:#f2c230;background:#202017;font:12px/1.45 system-ui,sans-serif}input,textarea{color-scheme:dark}
+</style>
+</head>
+<body>
+<div class="demo-note">ДЕМО · вымышленные данные и условия. Заказ и оплата не выполняются. Используйте тестовые данные; ввод остаётся в этой вкладке.</div>
+<div class="app">
+  <div class="proto">Прототип для коридорки · цены и зоны — демо</div>
+  <div class="top">
+    <button class="back" id="back" aria-label="Назад" hidden>←</button>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="step-n" id="stepn"></div>
+  </div>
+  <main id="screen"></main>
+</div>
+<div class="cta"><div class="in" id="cta"></div></div>
+
+<script>
+
+const MENU=[
+  {id:'nikkei',name:'Сет «Никкей»',price:5390,pcs:32,persons:[2,3],tags:['salmon','baked','nikkei'],kind:'set',
+   about:'Фирменные роллы в японо-перуанском стиле'},
+  {id:'tokio',name:'Сет «Путь из Токио в Лиму»',price:7990,pcs:48,persons:[3,6],tags:['salmon','tuna','baked','nikkei'],kind:'set',
+   about:'Большой сет на компанию: хиты ресторана'},
+  {id:'phila',name:'Ролл Филадельфия',price:1590,pcs:8,persons:[1,1],tags:['salmon','classic'],kind:'roll',about:'Лосось и сливочный сыр'},
+  {id:'kamch',name:'Ролл камчатский',price:1590,pcs:8,persons:[1,1],tags:['crab','classic'],kind:'roll',about:'Камчатский краб'},
+  {id:'natori',name:'Ролл Натори',price:1490,pcs:8,persons:[1,1],tags:['baked'],kind:'roll',about:'Запечённый ролл'},
+  {id:'akan',name:'Ролл Акан',price:1390,pcs:8,persons:[1,1],tags:['veg'],kind:'roll',about:'Лёгкий ролл'},
+  {id:'cake',name:'Маковый чизкейк с инжиром',price:910,pcs:1,persons:[1,1],tags:['dessert'],kind:'dessert',about:'Десерт к ужину'}
+];
+const FREE_FROM=6000;              
+const ZONES=[                      
+  {name:'Зона 1',min:40,max:60,fee:0},
+  {name:'Зона 3',min:70,max:90,fee:290},
+  {name:'Зона 5',min:80,max:100,fee:490}
+];
+const SUGG=[{t:'Тверская улица, 7',d:'Москва',z:0},{t:'Ленинградский проспект, 39',d:'Москва',z:1},{t:'Мичуринский проспект, 21',d:'Москва',z:2}];
+const PICKUP={address:'Ресторан на Большой Садовой, 14 с6',ready:'25–35 мин'};
+
+
+const S={step:0,mode:'delivery',address:'',zone:null,occasion:null,persons:2,likes:[],exclude:[],budget:null};
+const STEPS=['where','occasion','persons','likes','budget','result'];
+
+const OCCASIONS=[
+  {id:'fast',ic:'⚡',t:'Быстро поесть',s:'Голоден, важны время и цена'},
+  {id:'date',ic:'🕯',t:'Ужин вдвоём',s:'Хочется вечера, можно новое'},
+  {id:'party',ic:'🎉',t:'Компания',s:'Гости, праздник, на всех'},
+  {id:'me',ic:'🍣',t:'Себе любимые',s:'Знаю, что люблю'}
+];
+const LIKES=[['salmon','Лосось'],['tuna','Тунец'],['crab','Краб'],['baked','Запечённые'],['classic','Классика'],['nikkei','Что-то новое'],['veg','Без рыбы'],['dessert','Десерт']];
+const EXCL=[['onion','Лук'],['garlic','Чеснок'],['caviar','Икра'],['spicy','Острое']];
+const BUDGETS=[{id:'s',t:'До 3 000 ₽',max:3000},{id:'m',t:'3 000–6 000 ₽',max:6000},{id:'l',t:'Больше 6 000 ₽',max:99999}];
+
+const $=s=>document.querySelector(s);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rub=n=>n.toLocaleString('ru-RU')+'\u00a0₽';
+
+
+function pick(){
+  const max=(BUDGETS.find(b=>b.id===S.budget)||BUDGETS[2]).max;
+  const want=new Set(S.likes);
+  const score=it=>[...it.tags].filter(t=>want.has(t)).length;
+  let items=[];
+  const pcsNeed=S.occasion==='fast'?8*S.persons:Math.max(8, Math.round(12*S.persons));
+  const sets=MENU.filter(m=>m.kind==='set'&&S.persons>=m.persons[0]-1).sort((a,b)=>score(b)-score(a)||a.price-b.price);
+  if((S.occasion==='date'||S.occasion==='party')&&sets.length){
+    const fit=sets.filter(s=>s.price<=max&&S.persons<=s.persons[1]+1);
+    if(fit.length) items.push(fit[0]);
+  }
+  let pcs=items.reduce((a,i)=>a+i.pcs,0);
+  const rolls=MENU.filter(m=>m.kind==='roll').sort((a,b)=>score(b)-score(a)||a.price-b.price);
+  for(const r of rolls){
+    if(pcs>=pcsNeed) break;
+    const total=items.reduce((a,i)=>a+i.price,0);
+    if(total+r.price>max) continue;
+    if(!items.includes(r)){items.push(r);pcs+=r.pcs}
+  }
+  if(!items.length) items.push(rolls[0]);
+  const wantDessert=S.occasion==='date'||want.has('dessert');
+  const cake=MENU.find(m=>m.id==='cake');
+  if(wantDessert&&items.reduce((a,i)=>a+i.price,0)+cake.price<=max) items.push(cake);
+  return items;
+}
+function why(it){
+  const m={salmon:'любите лосось',tuna:'любите тунец',crab:'любите краба',baked:'любите запечённые',classic:'выбрали классику',nikkei:'хотели нового',veg:'без рыбы',dessert:'к ужину'};
+  const r=it.tags.filter(t=>S.likes.includes(t)).map(t=>m[t]);
+  if(it.kind==='set') r.unshift(`на ${it.persons[0]}–${it.persons[1]} человек, ${it.pcs} шт.`);
+  return r.length?r.join(' · '):it.about;
+}
+
+
+function render(){
+  const id=STEPS[S.step];
+  $('#bar').style.width=((S.step+1)/STEPS.length*100)+'%';
+  $('#stepn').textContent=id==='result'?'':`${S.step+1}/${STEPS.length-1}`;
+  $('#back').hidden=S.step===0;
+  const sc=$('#screen'), cta=$('#cta');
+  if(id==='where'){
+    sc.innerHTML=`
+      <h1>Подберём заказ за минуту</h1>
+      <p class="sub">Сначала — куда и как быстро. Доступность проверим для выбранной зоны.</p>
+      <div class="tabs"><button data-m="delivery" class="${S.mode==='delivery'?'on':''}">Доставка</button><button data-m="pickup" class="${S.mode==='pickup'?'on':''}">Самовывоз</button></div>
+      ${S.mode==='delivery'?`
+      <div class="field"><label>Адрес доставки</label><input id="addr" placeholder="Начните вводить улицу и дом" value="${esc(S.address)}" autocomplete="off"></div>
+      <div class="info" id="ginfo" ${S.zone?'hidden':''}>
+        <div class="row"><b>Привезём за</b><span><strong>40–100 мин</strong> в зависимости от зоны</span></div>
+        <div class="row"><b>Доставка</b><span>0–490 ₽, бесплатно от ${rub(FREE_FROM)}</span></div>
+        <div class="row"><b>Курьер</b><span class="ok">Вызываем сами</span></div>
+        <div class="row"><b></b><span class="note">Адрес можно указать сейчас или при оформлении</span></div>
+      </div>
+      <div class="sugg" id="sugg" ${S.zone?'hidden':''}>${SUGG.map((a,i)=>`<button data-s="${i}">${a.t}<span>${a.d}</span></button>`).join('')}</div>
+      <div class="info" id="zinfo" ${S.zone?'':'hidden'}>
+        <div class="row"><b>Привезём за</b><span><strong id="ztime"></strong></span></div>
+        <div class="row"><b>Доставка</b><span id="zfee"></span></div>
+        <div class="row"><b>Курьер</b><span class="ok">Вызываем сами — вам ничего делать не нужно</span></div>
+        <div class="row"><b></b><span class="note">${'Зона и цены — демо'}<span class="demo">прототип</span></span></div>
+      </div>`:`
+      <div class="info">
+        <div class="row"><b>Где</b><span>${PICKUP.address}</span></div>
+        <div class="row"><b>Будет готово</b><span><strong>${PICKUP.ready}</strong> после заказа</span></div>
+        <div class="row"><b>Оплата</b><span>онлайн или в ресторане</span></div>
+      </div>`}`;
+    sc.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mode=b.dataset.m;render()});
+    const inp=$('#addr');
+    if(inp){
+      inp.oninput=()=>{S.address=inp.value;S.zone=inp.value.trim().length>=5?ZONES[inp.value.length%ZONES.length]:null;$('#sugg').hidden=!!S.zone;$('#ginfo').hidden=!!S.zone;showZone();setCta()};
+      sc.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const a=SUGG[+b.dataset.s];S.address=a.t;S.zone=ZONES[a.z];inp.value=a.t;$('#sugg').hidden=true;$('#ginfo').hidden=true;showZone();setCta()});
+      showZone()}
+    function showZone(){
+      const z=S.zone, box=$('#zinfo'); if(!box) return;
+      box.hidden=!z; if(!z) return;
+      $('#ztime').textContent=`${z.min}–${z.max} мин`;
+      $('#zfee').innerHTML=z.fee?`${rub(z.fee)}, бесплатно от ${rub(FREE_FROM)}`:'<span class="ok">бесплатно</span>';
+    }
+    function setCta(){cta.innerHTML=`<button class="btn y" id="next">${S.mode==='delivery'&&!S.zone?'Дальше — адрес укажу потом':'Дальше'}</button>`;$('#next').onclick=next}
+    setCta(); return;
+  }
+  if(id==='occasion'){
+    sc.innerHTML=`<h1>Какой повод?</h1><p class="sub">От этого зависит, что предложить и сколько.</p>
+      <div class="opts">${OCCASIONS.map(o=>`<button class="opt ${S.occasion===o.id?'on':''}" data-o="${o.id}"><span class="ic">${o.ic}</span><span><b>${o.t}</b><span>${o.s}</span></span></button>`).join('')}</div>`;
+    sc.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{S.occasion=b.dataset.o;if(S.occasion==='party'&&S.persons<3)S.persons=4;if(S.occasion==='date')S.persons=2;render();setTimeout(next,180)});
+    cta.innerHTML=''; return;
+  }
+  if(id==='persons'){
+    sc.innerHTML=`<h1>Сколько вас?</h1><p class="sub">Положим столько приборов и рассчитаем объём.</p>
+      <div class="stepper"><button id="minus" aria-label="Меньше">−</button><output id="pn">${S.persons}</output><button id="plus" aria-label="Больше">+</button></div>
+      <p class="hint">🥢 Приборы: <strong id="pr">${S.persons}</strong> — добавим автоматически. Соус, имбирь и васаби — к каждому набору.</p>`;
+    const upd=()=>{$('#pn').textContent=S.persons;$('#pr').textContent=S.persons};
+    $('#minus').onclick=()=>{S.persons=Math.max(1,S.persons-1);upd()};
+    $('#plus').onclick=()=>{S.persons=Math.min(12,S.persons+1);upd()};
+    cta.innerHTML=`<button class="btn y" id="next">Дальше</button>`;$('#next').onclick=next; return;
+  }
+  if(id==='likes'){
+    sc.innerHTML=`<h1>Что любите?</h1><p class="sub">Можно несколько. Не знаете — пропустите, подберём хиты.</p>
+      <div class="lbl">Нравится</div><div class="chips">${LIKES.map(([k,t])=>`<button class="chip ${S.likes.includes(k)?'on':''}" data-l="${k}">${t}</button>`).join('')}</div>
+      <div class="lbl">Исключить</div><div class="chips">${EXCL.map(([k,t])=>`<button class="chip no ${S.exclude.includes(k)?'on':''}" data-x="${k}">${t}</button>`).join('')}</div>
+      <p class="hint">Исключения передадим кухне в комментарии к заказу.</p>`;
+    sc.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{tog(S.likes,b.dataset.l);b.classList.toggle('on')});
+    sc.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{tog(S.exclude,b.dataset.x);b.classList.toggle('on')});
+    cta.innerHTML=`<button class="btn y" id="next">Дальше</button>`;$('#next').onclick=next; return;
+  }
+  if(id==='budget'){
+    sc.innerHTML=`<h1>На какую сумму?</h1><p class="sub">Ориентир — подберём в него.</p>
+      <div class="opts">${BUDGETS.map(b=>`<button class="opt ${S.budget===b.id?'on':''}" data-b="${b.id}"><span><b>${b.t}</b></span></button>`).join('')}</div>`;
+    sc.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{S.budget=b.dataset.b;render();setTimeout(next,180)});
+    cta.innerHTML=''; return;
+  }
+  if(id==='result'){
+    const items=pick(), total=items.reduce((a,i)=>a+i.price,0);
+    const fee=S.mode==='pickup'?0:(S.zone&&total<FREE_FROM?S.zone.fee:0);
+    const left=S.mode==='delivery'&&S.zone&&S.zone.fee&&total<FREE_FROM?FREE_FROM-total:0;
+    const occ=OCCASIONS.find(o=>o.id===S.occasion);
+    sc.innerHTML=`<h1>Ваш заказ готов</h1>
+      <div class="sum">
+        <button data-go="0">${S.mode==='pickup'?'Самовывоз':(S.zone?`${S.zone.min}–${S.zone.max} мин`:'Доставка')}</button>
+        <button data-go="1">${occ?occ.t:'Повод'}</button>
+        <button data-go="2">${S.persons} чел.</button>
+        <button data-go="4">${(BUDGETS.find(b=>b.id===S.budget)||{t:'Бюджет'}).t}</button>
+      </div>
+      ${items.map(it=>`<div class="set">${it.kind!=='dessert'?'<div class="ph"><em>фото блюда</em></div>':''}<div class="bd">
+        <div class="line"><h3>${it.name}</h3><span class="price">${rub(it.price)}</span></div>
+        <p class="why">${why(it)}</p></div></div>`).join('')}
+      ${S.exclude.length?`<p class="note">Без: ${S.exclude.map(x=>EXCL.find(e=>e[0]===x)[1].toLowerCase()).join(', ')} — передадим кухне.</p>`:''}
+      <p class="note">🥢 Приборы: ${S.persons} · соус, имбирь, васаби — в каждом наборе.</p>
+      ${left?`<div class="free"><div class="meter" style="--p:${Math.round(total/FREE_FROM*100)}%"><i></i></div><div>Ещё <strong>${rub(left)}</strong> до бесплатной доставки</div></div>`:''}
+      <div class="gift"><span class="w">WAVE</span><div>Подарок к первому заказу — введите промокод при оплате</div></div>
+      <div class="info">
+        <div class="row"><b>Итого</b><span><strong>${rub(total+fee)}</strong>${fee?` · доставка ${rub(fee)}`:''}${S.mode==='delivery'&&!S.zone?' · доставку посчитаем по адресу':''}</span></div>
+        <div class="row"><b>Оплата</b><span>картой онлайн или СБП</span></div>
+        <div class="row"><b>Бонусы</b><span>начислим после заказа — увидите в приложении</span></div>
+      </div>`;
+    sc.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.step=+b.dataset.go;render()});
+    cta.innerHTML=`<button class="btn o" id="buy"><span>Положить в корзину</span><span>${rub(total+fee)}</span></button><button class="btn g" id="menu">Хочу выбрать сам — всё меню</button>`;
+    $('#buy').onclick=()=>{$('#buy').innerHTML='<span>В корзине ✓</span><span>к оформлению →</span>'};
+    $('#menu').onclick=()=>alertish('Здесь откроется меню сайта');
+    return;
+  }
+}
+function tog(a,v){const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1)}
+function next(){S.step=Math.min(STEPS.length-1,S.step+1);render();window.scrollTo(0,0)}
+function alertish(t){const p=document.createElement('div');p.textContent=t;p.style.cssText='position:fixed;left:50%;top:20px;transform:translateX(-50%);background:#333;color:#fff;padding:10px 14px;border-radius:10px;font:14px Inter;z-index:9';document.body.appendChild(p);setTimeout(()=>p.remove(),1600)}
+$('#back').onclick=()=>{S.step=Math.max(0,S.step-1);render()};
+render();
+</script>
+</body>
+</html>

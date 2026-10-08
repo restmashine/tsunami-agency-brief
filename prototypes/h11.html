@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Цунами — повторный заказ (прототип H11)</title>
+<style>
+  :root{
+    --bg:#0e0e0f; --panel:#1b1b1d; --card:#262628; --line:#333336;
+    --text:#f4f4f2; --muted:#a6a6a3; --yellow:#f2c230; --yellow-ink:#1a1500;
+    --ok:#7bd88f; --warn:#ff8a5c; --orange:#e8833a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.45 Inter,system-ui,-apple-system,sans-serif}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .app{max-width:430px;margin:0 auto;min-height:100vh;padding:0 16px 200px}
+  .proto{font:600 11px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;padding:10px 0 6px}
+  .top{display:flex;align-items:center;gap:12px;padding:8px 0 4px}
+  .back{width:40px;height:40px;border-radius:50%;background:var(--card);border:0;font-size:20px;flex:none}
+  .back[hidden]{visibility:hidden;display:block}
+  .hello{flex:1;font-size:14px;color:var(--muted)}
+  h1{font:800 22px/1.15 "JetBrains Mono",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.02em;margin:18px 0 6px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:15px}
+  .last{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:10px}
+  .last .meta{font-size:13px;color:var(--muted)}
+  .last ul{margin:0;padding-left:18px;font-size:15px}
+  .btn{border:0;border-radius:12px;padding:13px;font-weight:700;width:100%}
+  .btn.y{background:var(--yellow);color:var(--yellow-ink)}
+  .btn.g{background:var(--card)}
+  .dish{display:grid;grid-template-columns:60px 1fr;gap:12px;background:var(--card);border-radius:14px;padding:10px;margin-bottom:10px;border:2px solid transparent}
+  .dish.att{border-color:var(--orange)}
+  .ph{width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,#3a3a3d,#26262a);display:grid;place-items:center;font-size:24px}
+  .dish h3{margin:0;font:600 15px/1.25 Inter}
+  .tag{display:inline-block;font-size:12px;border-radius:6px;padding:2px 6px;margin:4px 0 6px}
+  .tag.ok{background:#1f3526;color:var(--ok)}
+  .tag.up{background:#3a2a17;color:var(--orange)}
+  .tag.no{background:#3a1f1a;color:var(--warn)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .qty{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:10px;padding:4px}
+  .qty button{width:30px;height:30px;border:0;border-radius:8px;background:var(--card);font-size:18px}
+  .qty span{min-width:18px;text-align:center;font-weight:600}
+  .repl{display:grid;gap:6px;margin-top:6px}
+  .repl button{border:0;background:var(--panel);border-radius:10px;padding:9px 10px;text-align:left;font-size:14px;display:flex;justify-content:space-between}
+  .more{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:6px}
+  .more button{flex:none;border:0;background:var(--card);border-radius:12px;padding:10px 12px;font-size:14px;text-align:left}
+  .more small{display:block;color:var(--muted)}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:8px 0 14px;display:grid;gap:8px}
+  .box .ln{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+  .box .ln span:first-child{color:var(--muted)}
+  .okc{color:var(--ok)}
+  .note{font-size:13px;color:var(--muted);margin:4px 0 0}
+  .addr{display:grid;gap:10px;margin-bottom:12px}
+  .addr button{display:flex;justify-content:space-between;align-items:center;border:2px solid transparent;background:var(--card);border-radius:14px;padding:14px;text-align:left}
+  .addr button.on{border-color:var(--yellow)}
+  .addr small{color:var(--muted)}
+  .tabs{display:flex;background:var(--card);border-radius:12px;padding:4px;margin-bottom:12px}
+  .tabs button{flex:1;border:0;background:transparent;font-weight:600;padding:10px;border-radius:9px;font-size:14px}
+  .tabs button.on{background:var(--yellow);color:var(--yellow-ink)}
+  .bottom{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,transparent,var(--bg) 30%)}
+  .bottom .in{max-width:398px;margin:0 auto}
+  .cta{width:100%;border:0;border-radius:14px;padding:16px;background:var(--yellow);color:var(--yellow-ink);font:700 17px Inter;display:flex;justify-content:space-between;align-items:center}
+  .cta:disabled{opacity:.4;cursor:not-allowed}
+  .cta[hidden]{display:none}
+  .done{text-align:center;padding-top:40px}
+  .done .big{font-size:56px}
+  .mod{max-width:430px;margin:24px auto 0;padding:0 16px;color:var(--muted);font-size:12px}
+  .mod details{background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:8px 12px}
+  .mod table{width:100%;border-collapse:collapse;margin-top:6px}
+  .mod td{padding:3px 0;border-top:1px solid var(--line)}
+  .mod td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.demo-note{max-width:430px;margin:0 auto;padding:12px 16px;color:#f2c230;background:#202017;font:12px/1.45 system-ui,sans-serif}input,textarea{color-scheme:dark}
+</style>
+</head>
+<body>
+<div class="demo-note">ДЕМО · вымышленные данные и условия. Заказ и оплата не выполняются. Используйте тестовые данные; ввод остаётся в этой вкладке.</div>
+<div class="app">
+  <div class="proto">Прототип H11 · повторный заказ в приложении · демо-данные</div>
+  <div class="top">
+    <button class="back" id="back" aria-label="Назад" hidden>←</button>
+    <div class="hello" id="hello">Вы вошли · Анна</div>
+  </div>
+  <main id="screen"></main>
+</div>
+<div class="bottom"><div class="in"><button class="cta" id="cta"></button></div></div>
+
+
+<script>
+
+
+const LAST=[
+  {id:'truf',name:'Ролл трюфельный гребешок',was:1690,price:1690,q:2,st:'ok',e:'🍣'},
+  {id:'phila',name:'Ролл Филадельфия',was:1590,price:1690,q:1,st:'up',e:'🍣'},
+  {id:'salad',name:'Салат с тунцом и авокадо',was:990,price:990,q:1,st:'no',e:'🥗',repl:[{id:'tuna',name:'Сашими тунец',price:990,e:'🐟'},{id:'salmon',name:'Сашими лосось',price:1150,e:'🐟'}]},
+  {id:'cake',name:'Маковый чизкейк с инжиром',was:910,price:910,q:1,st:'ok',e:'🍰'}
+];
+const MORE=[{id:'kamch',name:'Ролл камчатский',price:1590,e:'🍣'},{id:'natori',name:'Ролл Натори',price:1490,e:'🍣'},{id:'nikkei',name:'Сет «Никкей»',price:5390,e:'🍱'}];
+const FREE_FROM=6000, FEE=290;
+const ADDRS=[{t:'Ленинградский проспект, 37, кв. 12',d:'как в прошлый раз · 40–60 мин'},{t:'Тверская улица, 22',d:'работа · 50–70 мин'}];
+let S;
+function reset(){S={step:0,items:LAST.filter(i=>i.st!=='no').map(i=>({...i})),pending:LAST.find(i=>i.st==='no'),addr:0,when:'now',pay:'card',path:''}}
+reset();
+const LOG=[];let t0=Date.now(),tStep=Date.now();
+const NAMES=['Главная','Корзина с прошлого заказа','Адрес и время','Оплата','Заказ принят'];
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rub=n=>n.toLocaleString('ru-RU')+' ₽';
+const $=s=>document.querySelector(s);
+const sum=()=>S.items.reduce((a,i)=>a+i.price*i.q,0);
+const fee=()=>sum()>=FREE_FROM?0:FEE;
+function mark(extra){const now=Date.now();LOG.push({s:extra||NAMES[S.step],sec:Math.round((now-tStep)/1000)});tStep=now;renderMod()}
+function go(n){mark();S.step=n;render();window.scrollTo(0,0)}
+
+function render(){
+  $('#back').hidden=S.step===0||S.step===4;
+  const sc=$('#screen'),cta=$('#cta');cta.hidden=false;
+  if(S.step===0){
+    const lastSum=LAST.reduce((a,i)=>a+i.was*i.q,0);
+    sc.innerHTML=`<h1>Снова закажем?</h1><p class="sub">Вход сохранён — код из SMS не нужен.</p>
+      <div class="last"><div class="meta">Ваш прошлый заказ · неделю назад · ${rub(lastSum)}</div>
+      <ul>${LAST.map(i=>`<li>${i.name}${i.q>1?' × '+i.q:''}</li>`).join('')}</ul>
+      <button class="btn y" id="rep">Начать с этого заказа</button>
+      <button class="btn g" id="new">Собрать заново</button></div>`;
+    $('#rep').onclick=()=>{S.path='с прошлого заказа';go(1)};
+    $('#new').onclick=()=>{S.path='собрать заново';S.items=[];S.pending=null;mark('Выбрал «Собрать заново»');go(1)};
+    cta.hidden=true;
+  }
+  if(S.step===1){
+    const p=S.pending;
+    sc.innerHTML=`<h1>Корзина</h1><p class="sub">${S.path==='с прошлого заказа'?'Подставили прошлый заказ и проверили наличие и цены. Можно поменять что угодно.':'Соберите заказ.'}</p>
+      ${p?`<div class="dish att"><div class="ph">${p.e}</div><div><h3>${p.name}</h3><span class="tag no">будет позже — сейчас нет</span>
+        <div class="note">Заменить на похожее:</div><div class="repl">${p.repl.map((r,k)=>`<button data-r="${k}"><span>${r.e} ${r.name}</span><b>${rub(r.price)}</b></button>`).join('')}<button data-r="x"><span>Убрать из заказа</span><span></span></button></div></div></div>`:''}
+      ${S.items.map((i,k)=>`<div class="dish"><div class="ph">${i.e}</div><div><h3>${i.name}</h3>
+        ${i.st==='up'?`<span class="tag up">подорожало: было ${rub(i.was)}, сейчас ${rub(i.price)}</span>`:i.st==='ok'?'<span class="tag ok">✓ в наличии, цена та же</span>':''}
+        <div class="row"><b>${rub(i.price*i.q)}</b><div class="qty"><button data-m="${k}">−</button><span>${i.q}</span><button data-p="${k}">+</button></div></div></div></div>`).join('')}
+      <div class="note" style="margin:10px 0 6px">Добавить к заказу</div>
+      <div class="more">${MORE.map((m,k)=>`<button data-add="${k}">${m.e} ${m.name}<small>${rub(m.price)}</small></button>`).join('')}</div>
+      <div class="box"><div class="ln"><span>Блюда</span><b>${rub(sum())}</b></div>
+      ${sum()<FREE_FROM?`<div class="ln"><span>До бесплатной доставки</span><span>${rub(FREE_FROM-sum())}</span></div>`:'<div class="ln"><span>Доставка</span><span class="okc">бесплатно</span></div>'}</div>`;
+    sc.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{
+      if(b.dataset.r!=='x'){const r=p.repl[+b.dataset.r];S.items.push({...r,q:1,st:'ok'});mark('Замена: '+r.name)}else mark('Убрал недоступное');
+      S.pending=null;render()});
+    sc.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{S.items[+b.dataset.p].q++;render()});
+    sc.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const i=S.items[+b.dataset.m];i.q--;if(i.q<=0)S.items.splice(+b.dataset.m,1);render()});
+    sc.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const m=MORE[+b.dataset.add];const ex=S.items.find(i=>i.id===m.id);ex?ex.q++:S.items.push({...m,q:1,st:''});render()});
+    const ok=S.items.length>0&&!S.pending;
+    cta.disabled=!ok;cta.innerHTML=ok?`<span>Дальше: адрес</span><span>${rub(sum())}</span>`:(S.pending?'Решите, чем заменить недоступное':'Добавьте блюда');
+    cta.onclick=()=>go(2);
+  }
+  if(S.step===2){
+    const f=fee();
+    sc.innerHTML=`<h1>Куда и когда</h1>
+      <div class="addr">${ADDRS.map((a,k)=>`<button class="${S.addr===k?'on':''}" data-a="${k}"><span>${a.t}<br><small>${a.d}</small></span><span>${S.addr===k?'●':'○'}</span></button>`).join('')}
+      <button data-a="new"><span>Другой адрес<br><small>укажите на следующем шаге</small></span><span>＋</span></button></div>
+      <div class="tabs"><button class="${S.when==='now'?'on':''}" data-w="now">Как можно скорее</button><button class="${S.when==='later'?'on':''}" data-w="later">Ко времени</button></div>
+      <div class="box"><div class="ln"><span>Всё из корзины</span><span class="okc">✓ доступно на этот адрес</span></div>
+      <div class="ln"><span>Привезём</span><b>${S.when==='now'?(S.addr===0?'за 40–60 мин':'за 50–70 мин'):'сегодня к 20:00'}</b></div>
+      <div class="ln"><span>Доставка</span><span>${f===0?'<span class="okc">бесплатно</span>':rub(f)}</span></div></div>`;
+    sc.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{if(b.dataset.a==='new'){mark('Выбрал «Другой адрес»');return}S.addr=+b.dataset.a;render()});
+    sc.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{S.when=b.dataset.w;render()});
+    cta.disabled=false;cta.innerHTML=`<span>Подтвердить и оплатить</span><span>→</span>`;cta.onclick=()=>go(3);
+  }
+  if(S.step===3){
+    const f=fee(),total=sum()+f;
+    sc.innerHTML=`<h1>Оплата</h1>
+      <div class="box"><div class="ln"><span>Блюда · ${S.items.reduce((a,i)=>a+i.q,0)}</span><span>${rub(sum())}</span></div>
+      <div class="ln"><span>Доставка</span><span>${f===0?'бесплатно':rub(f)}</span></div>
+      <div class="ln"><span>Адрес</span><span>${ADDRS[S.addr].t}</span></div>
+      <div class="ln"><span>Баллы «Волна»</span><span>+${Math.round(total*0.01)} баллов</span></div>
+      <div class="ln"><b>Итого</b><b>${rub(total)}</b></div></div>
+      <div class="addr"><button class="${S.pay==='card'?'on':''}" data-pay="card"><span>Карта •• 4242<br><small>сохранена в прошлый раз</small></span><span>${S.pay==='card'?'●':'○'}</span></button>
+      <button class="${S.pay==='sbp'?'on':''}" data-pay="sbp"><span>СБП<br><small>через приложение банка</small></span><span>${S.pay==='sbp'?'●':'○'}</span></button></div>
+      <p class="note">Демо: оплата не проводится.</p>`;
+    sc.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{S.pay=b.dataset.pay;render()});
+    cta.disabled=false;cta.innerHTML=`<span>Оплатить</span><span>${rub(total)}</span>`;cta.onclick=()=>go(4);
+  }
+  if(S.step===4){
+    sc.innerHTML=`<div class="done"><div class="big">✓</div><h1>Заказ принят</h1><p class="sub">${S.when==='now'?'Привезём за 40–60 мин.':'Привезём сегодня к 20:00.'} Путь: ${S.path}.</p></div>`;
+    cta.disabled=false;cta.innerHTML='<span>Пройти заново</span><span>↺</span>';
+    cta.onclick=()=>{mark();reset();LOG.length=0;t0=Date.now();tStep=Date.now();render();renderMod()};
+  }
+}
+function renderMod(){}
+$('#back').onclick=()=>go(Math.max(0,S.step-1));
+render();renderMod();
+</script>
+</body>
+</html>
